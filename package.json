@@ -1,0 +1,64 @@
+{
+  "name": "code-plaza",
+  "displayName": "Code Plaza",
+  "description": "A playful virtual plaza that keeps your team visible inside VS Code.",
+  "version": "0.0.1",
+  "publisher": "code-plaza",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:code-plaza.openPlaza"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "code-plaza.openPlaza",
+        "title": "Code Plaza: Open Plaza",
+        "category": "Code Plaza"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "codePlaza",
+          "title": "Code Plaza",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "codePlaza": [
+        {
+          "id": "codePlazaView",
+          "name": "Code Plaza"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.config.js",
+    "watch": "node esbuild.config.js --watch",
+    "lint": "tsc --noEmit",
+    "package": "npm run build && vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "@types/react": "^18.2.21",
+    "@types/react-dom": "^18.2.7",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.19.12",
+    "typescript": "^5.4.5",
+    "vsce": "^2.14.0"
+  },
+  "dependencies": {
+    "firebase": "^10.7.2",
+    "nanoid": "^4.0.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}

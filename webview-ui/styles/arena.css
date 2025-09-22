@@ -1,0 +1,319 @@
+:root {
+  color-scheme: light dark;
+}
+
+body,
+html,
+#root,
+.app {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: var(--vscode-font-family, 'Segoe UI', sans-serif);
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+}
+
+button {
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+button.primary {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+
+button.secondary {
+  background: transparent;
+  color: var(--vscode-button-foreground);
+  border: 1px solid var(--vscode-button-border, var(--vscode-button-background));
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.error-banner {
+  padding: 8px 12px;
+  background: var(--vscode-inputValidation-errorBackground);
+  color: var(--vscode-inputValidation-errorForeground);
+  border-bottom: 1px solid var(--vscode-inputValidation-errorBorder);
+}
+
+/* Profile view */
+.profile-view {
+  display: flex;
+  flex: 1;
+  gap: 24px;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.profile-card,
+.profile-preview {
+  flex: 1;
+  background: var(--vscode-sideBar-background);
+  border: 1px solid var(--vscode-editorGroup-border);
+  border-radius: 12px;
+  padding: 24px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-card h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.profile-lead {
+  margin: 0;
+  color: var(--vscode-descriptionForeground);
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.profile-label input,
+.profile-label textarea {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--vscode-input-border, transparent);
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  font-size: 14px;
+}
+
+.avatar-fieldset {
+  border: 1px solid var(--vscode-editorGroup-border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.avatar-options {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.avatar-options label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: border 0.2s ease, transform 0.2s ease;
+}
+
+.avatar-options label.selected {
+  border: 1px solid var(--vscode-focusBorder);
+  transform: translateY(-2px);
+}
+
+.avatar-options img {
+  width: 48px;
+  height: 48px;
+  image-rendering: pixelated;
+}
+
+.avatar-options input {
+  display: none;
+}
+
+.profile-error {
+  color: var(--vscode-inputValidation-errorForeground);
+  margin: 0;
+}
+
+.profile-preview {
+  align-items: center;
+  text-align: center;
+}
+
+.profile-preview-avatar img {
+  width: 72px;
+  height: 72px;
+  image-rendering: pixelated;
+}
+
+.profile-preview-name {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.profile-preview-message {
+  color: var(--vscode-descriptionForeground);
+  margin: 0;
+}
+
+/* Arena */
+.arena-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+}
+
+.arena-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 24px;
+  background: var(--vscode-sideBar-background);
+  border-bottom: 1px solid var(--vscode-editorGroup-border);
+}
+
+.arena-profile h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.arena-profile p {
+  margin: 4px 0 0;
+  color: var(--vscode-descriptionForeground);
+}
+
+.arena-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.arena-grid {
+  position: relative;
+  flex: 1;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.1));
+  border: 1px solid var(--vscode-editorGroup-border);
+  margin: 16px 24px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.arena-grid::before,
+.arena-grid::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-size: calc(100% / 10) calc(100% / 6);
+  pointer-events: none;
+}
+
+.arena-grid::before {
+  background-image: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+}
+
+.arena-grid::after {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0, transparent 40%);
+  opacity: 0.3;
+}
+
+.avatar-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: left 0.6s ease, top 0.6s ease;
+}
+
+.avatar-node.self .avatar-image {
+  box-shadow: 0 0 0 3px var(--vscode-focusBorder);
+}
+
+.avatar-wrapper {
+  position: relative;
+}
+
+.avatar-image {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  background: var(--vscode-editor-background);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+  image-rendering: pixelated;
+}
+
+.avatar-status {
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  font-size: 20px;
+}
+
+.avatar-name {
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.avatar-level {
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.avatar-tooltip {
+  position: absolute;
+  bottom: 72px;
+  min-width: 160px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  font-size: 12px;
+}
+
+.avatar-node:hover .avatar-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.arena-footer {
+  padding: 12px 24px 24px;
+  color: var(--vscode-descriptionForeground);
+  font-size: 13px;
+}
+
+@media (max-width: 960px) {
+  .profile-view {
+    flex-direction: column;
+  }
+}
