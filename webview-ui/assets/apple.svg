@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="appleBody" cx="50%" cy="40%" r="60%">
+      <stop offset="0" stop-color="#ffefc2"/>
+      <stop offset="0.5" stop-color="#ff9b4a"/>
+      <stop offset="1" stop-color="#d9481f"/>
+    </radialGradient>
+  </defs>
+  <path fill="url(#appleBody)" d="M32 8c-11.6 0-20 9.5-20 21.1 0 9.7 5.6 17.3 12.5 21.5C27.1 53.5 29.5 56 32 56s4.9-2.5 7.5-5.4C46.4 46.4 52 38.8 52 29.1 52 17.5 43.6 8 32 8z"/>
+  <path fill="#2f6b2f" d="M30.2 8.2C30.1 5.4 31 3 32.5 2c3.4-2.3 8.1-.3 10 3.6-2.8-.4-5.6 1.1-7.2 3.6-1.4 2.1-3.4 3.2-5.1 2.6z"/>
+  <path fill="#2f6b2f" d="M32 8c2.1-4.5 5.4-6.5 9.1-5.5 1.7 4.6-1.7 9.1-6.8 10-1.2.2-2.4-.2-3.3-1z"/>
+  <ellipse cx="22" cy="32" rx="4" ry="6" fill="#ffe6cf" opacity="0.5"/>
+</svg>

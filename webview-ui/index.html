@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src {{cspSource}} https: data:; script-src 'nonce-{{nonce}}'; style-src {{cspSource}} 'unsafe-inline'; connect-src https: {{cspSource}}; font-src {{cspSource}} https: data:;"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Code Plaza</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" nonce="{{nonce}}" src="./bundle.js"></script>
+  </body>
+</html>
