@@ -37,7 +37,9 @@ const App: React.FC = () => {
   const [newJoinedUser, setNewJoinedUser] = useState<{
     uid: string;
     name: string;
+    message?: string;
   } | null>(null);
+  const [levelUpMessage, setLevelUpMessage] = useState<string | null>(null);
 
   useEffect(() => {
     vscode.postMessage({ type: "ready" });
@@ -80,6 +82,14 @@ const App: React.FC = () => {
           setNewJoinedUser(data.payload);
           // 5秒後にクリア
           setTimeout(() => setNewJoinedUser(null), 5000);
+          break;
+        case "levelUp":
+          setLevelUpMessage(`レベルが${data.payload.newLevel}に上がりました！`);
+          // 5秒後にクリア
+          setTimeout(() => setLevelUpMessage(null), 5000);
+          break;
+        case "greetedToday":
+          setGreetedToday(data.payload);
           break;
         case "error":
           setError(data.payload);
@@ -181,6 +191,7 @@ const App: React.FC = () => {
           sessions={arenaSessions}
           onEditProfile={handleEditProfile}
           newJoinedUser={newJoinedUser}
+          levelUpMessage={levelUpMessage}
         />
       )}
     </div>

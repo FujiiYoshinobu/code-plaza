@@ -28,7 +28,12 @@
         "command": "code-plaza.openPlaza",
         "title": "Open Code Plaza",
         "category": "Code Plaza"
+      },
+      {
+        "command": "code-plaza.resetData",
+        "title": "Code Plaza: Reset Local Data"
       }
+
     ]
   },
   "scripts": {

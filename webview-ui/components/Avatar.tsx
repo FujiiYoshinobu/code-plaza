@@ -14,6 +14,7 @@ interface AvatarProps {
 }
 
 const Avatar: React.FC<AvatarProps> = ({
+  uid,
   name,
   avatarCode,
   message,
@@ -28,9 +29,6 @@ const Avatar: React.FC<AvatarProps> = ({
     () => resolveAvatar(avatarCode, options),
     [avatarCode, options]
   );
-
-  const statusText = state === "active" ? "活動中" : "休憩中";
-  const statusEmoji = state === "active" ? "🟢" : "😴";
 
   // Arenaから渡された grid 座標を解釈
   const gridX = (style as any)["--grid-x"] ?? 1;
@@ -87,51 +85,47 @@ const Avatar: React.FC<AvatarProps> = ({
       state === "sleeping" ? "float 2s ease-in-out infinite" : undefined,
   };
 
-  const avatarTooltipStyle: React.CSSProperties = {
-    position: "absolute",
-    bottom: "20px",
+  // 画面上部メッセージ表示用スタイル
+  const topMessageStyle: React.CSSProperties = {
+    position: "fixed",
+    top: "45px",
     left: "50%",
-    transform: isHovered
-      ? "translateX(-50%) translateY(-8px)"
-      : "translateX(-50%) translateY(4px)",
-    minWidth: "120px",
-    maxWidth: "180px",
-    textAlign: "center",
-    background:
-      "linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(40, 40, 40, 0.9))",
+    transform: "translateX(-50%)",
     color: "white",
-    padding: "6px 10px",
+    fontSize: "10px",
+    fontWeight: "bold",
+    background: "rgba(0,0,0,0.5)",
+    padding: "4px 2px",
     borderRadius: "6px",
-    opacity: isHovered ? 1 : 0,
+    zIndex: 2000,
     pointerEvents: "none",
-    transition: "all 0.3s ease",
-    fontSize: "11px",
-    zIndex: 100,
+    transition: "opacity 0.3s ease",
+    opacity: isHovered && message ? 1 : 0,
   };
 
   return (
-    <div
-      style={avatarNodeStyle}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <span style={avatarNameStyle}>
-        Lv.{level} {name}
-      </span>
-      <div style={avatarWrapperStyle}>
-        <img src={avatar.src} alt={name} style={avatarImageStyle} />
-        {state === "sleeping" && <span style={avatarStatusStyle}>💤</span>}
+    <>
+      <div
+        style={avatarNodeStyle}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <span style={avatarNameStyle}>
+          Lv.{level} {name}
+        </span>
+        <div style={avatarWrapperStyle}>
+          <img src={avatar.src} alt={name} style={avatarImageStyle} />
+          {state === "sleeping" && <span style={avatarStatusStyle}>💤</span>}
+        </div>
       </div>
-      {isHovered && (
-        <div style={avatarTooltipStyle}>
-          {message && <div>"{message}"</div>}
-          <div>
-            {statusEmoji} {statusText} • レベル {level}
-            {isSelf && " • あなた"}
-          </div>
+
+      {/* Hover時のみ上部に表示 */}
+      {isHovered && message && (
+        <div style={topMessageStyle}>
+          {name}: "{message}"
         </div>
       )}
-    </div>
+    </>
   );
 };
 

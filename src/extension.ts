@@ -17,6 +17,7 @@ const VIEW_ID = 'codePlazaView';
 const COMMAND_ID = 'code-plaza.openPlaza';
 const PROFILE_KEY = 'code-plaza.profile';
 const UID_KEY = 'code-plaza.uid';
+const RESET_COMMAND_ID = 'code-plaza.resetData';
 
 export function activate(context: vscode.ExtensionContext) {
   console.log('[Code Plaza] Extension is being activated...');
@@ -58,6 +59,26 @@ export function activate(context: vscode.ExtensionContext) {
   } catch (error) {
     console.error('[Code Plaza] Failed to activate extension:', error);
   }
+
+  // --- 追加: globalState リセットコマンド ---
+  const resetCommand = vscode.commands.registerCommand(RESET_COMMAND_ID, async () => {
+    const confirm = await vscode.window.showWarningMessage(
+      'Code Plaza のローカルデータ（プロフィール・UID・挨拶履歴）をリセットしますか？',
+      { modal: true },
+      'はい', 'キャンセル'
+    );
+
+    if (confirm === 'はい') {
+      for (const key of context.globalState.keys()) {
+        if (key.startsWith('code-plaza.') || key.startsWith('greeted-') || key.startsWith('seen-')) {
+          await context.globalState.update(key, undefined);
+        }
+      }
+      vscode.window.showInformationMessage('Code Plaza のローカルデータをリセットしました。');
+    }
+  });
+
+  context.subscriptions.push(resetCommand);
 }
 
 export function deactivate() {
@@ -207,6 +228,13 @@ class CodePlazaViewProvider implements vscode.WebviewViewProvider {
       }
     }
     this.messenger.post({ type: 'profile', payload: this.profile ?? null });
+    
+    // 今日の挨拶済みリストを送信
+    const today = new Date().toISOString().slice(0, 10);
+    const greetedKey = `greeted-${today}`;
+    const greetedToday = this.context.globalState.get<string[]>(greetedKey) || [];
+    this.messenger.post({ type: 'greetedToday', payload: greetedToday });
+    
     if (this.profile) {
       await this.startSession();
     }
@@ -284,13 +312,9 @@ class CodePlazaViewProvider implements vscode.WebviewViewProvider {
       return;
     }
     
-    // ローカルすれ違いリストでチェック
+    // 既に今日挨拶済みかチェック
     if (hasGreetedToday(this.context, greetedUid)) {
-      console.log('[Code Plaza] Already greeted today (local check):', greetedUid);
-      this.messenger.post({ 
-        type: 'error', 
-        payload: '今日すでに挨拶済みです（ローカル記録より）' 
-      });
+      console.log('[Code Plaza] Already greeted today:', greetedUid);
       return;
     }
     
@@ -301,12 +325,25 @@ class CodePlazaViewProvider implements vscode.WebviewViewProvider {
         addGreetedToday(this.context, greetedUid);
         console.log('[Code Plaza] Added to local greeted list:', greetedUid);
         
+        // 更新された挨拶済みリストを送信
+        const today = new Date().toISOString().slice(0, 10);
+        const greetedKey = `greeted-${today}`;
+        const updatedGreetedToday = this.context.globalState.get<string[]>(greetedKey) || [];
+        this.messenger.post({ type: 'greetedToday', payload: updatedGreetedToday });
+        
+        const oldLevel = this.profile?.level ?? 1;
         this.profile = {
           ...(this.profile ?? createInitialProfile({})),
           exp: result.exp,
           level: result.level,
         };
         await this.context.globalState.update(PROFILE_KEY, this.profile);
+        
+        // レベルアップを検知した場合はメッセージを送信
+        if (result.level > oldLevel) {
+          this.messenger.post({ type: 'levelUp', payload: { newLevel: result.level } });
+        }
+        
         this.messenger.post({ type: 'greetingRecorded', payload: result });
       }
     } catch (error) {

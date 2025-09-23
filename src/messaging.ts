@@ -11,7 +11,9 @@ export type ExtensionToWebviewMessage =
   | { type: 'profileSaved'; payload: StoredProfile }
   | { type: 'sessions'; payload: SessionPayload }
   | { type: 'greetingRecorded'; payload: GreetingPayload }
-  | { type: 'userJoined'; payload: { uid: string; name: string } }
+  | { type: 'userJoined'; payload: { uid: string; name: string; message?: string } }
+  | { type: 'levelUp'; payload: { newLevel: number } }
+  | { type: 'greetedToday'; payload: string[] }
   | { type: 'error'; payload: string };
 
 export type WebviewToExtensionMessage =

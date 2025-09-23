@@ -7,7 +7,8 @@ interface ArenaProps {
   selfUid: string;
   sessions: SessionSummary[];
   onEditProfile: () => void;
-  newJoinedUser?: { uid: string; name: string } | null;
+  newJoinedUser?: { uid: string; name: string; message?: string } | null;
+  levelUpMessage?: string | null;
 }
 
 interface Position {
@@ -17,11 +18,13 @@ interface Position {
 
 const GRID_COLUMNS = 30;
 const GRID_ROWS = 20;
+// アバターが枠外に出ないように余裕を持たせる
+const MARGIN = 2;
 
 function randomPosition(): Position {
   return {
-    x: Math.floor(Math.random() * GRID_COLUMNS),
-    y: Math.floor(Math.random() * GRID_ROWS),
+    x: Math.floor(Math.random() * (GRID_COLUMNS - MARGIN * 2)) + MARGIN,
+    y: Math.floor(Math.random() * (GRID_ROWS - MARGIN * 2)) + MARGIN,
   };
 }
 function moveWithinGrid(position: Position, state: SessionState): Position {
@@ -39,8 +42,8 @@ function moveWithinGrid(position: Position, state: SessionState): Position {
   ];
   const c = dirs[Math.floor(Math.random() * dirs.length)];
   return {
-    x: Math.max(0, Math.min(GRID_COLUMNS - 1, position.x + c.x)),
-    y: Math.max(0, Math.min(GRID_ROWS - 1, position.y + c.y)),
+    x: Math.max(MARGIN, Math.min(GRID_COLUMNS - MARGIN - 1, position.x + c.x)),
+    y: Math.max(MARGIN, Math.min(GRID_ROWS - MARGIN - 1, position.y + c.y)),
   };
 }
 
@@ -50,6 +53,7 @@ const Arena: React.FC<ArenaProps> = ({
   selfUid,
   onEditProfile,
   newJoinedUser,
+  levelUpMessage,
 }) => {
   const [positions, setPositions] = useState<Record<string, Position>>({});
   const [joinMessage, setJoinMessage] = useState<string | null>(null);
@@ -57,7 +61,10 @@ const Arena: React.FC<ArenaProps> = ({
   // 新規参加メッセージ（1日1回制限）
   useEffect(() => {
     if (newJoinedUser) {
-      setJoinMessage(`${newJoinedUser.name}さんが参加しました。`);
+      const message = newJoinedUser.message
+        ? `${newJoinedUser.name}さんが参加しました。「${newJoinedUser.message}」`
+        : `${newJoinedUser.name}さんが参加しました。`;
+      setJoinMessage(message);
       setTimeout(() => setJoinMessage(null), 5000);
     }
   }, [newJoinedUser]);
@@ -92,10 +99,10 @@ const Arena: React.FC<ArenaProps> = ({
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "8px 12px",
+    padding: "8px 2px",
     background: "var(--vscode-editor-background)",
     borderBottom: "1px solid var(--vscode-editorGroup-border)",
-    fontSize: "13px",
+    fontSize: "10px",
     color: "var(--vscode-descriptionForeground)",
   };
   const statsTextStyle: React.CSSProperties = { fontSize: "12px" };
@@ -107,20 +114,20 @@ const Arena: React.FC<ArenaProps> = ({
   };
   const arenaGridStyle: React.CSSProperties = {
     position: "relative",
-    width: "300px",
+    width: "100%",
     height: "200px",
-    margin: "0 auto",
-    padding: "4px", // ← 外周に余白
-    boxSizing: "border-box", // ← パディング込みで300x200を維持
+    margin: "0",
+    padding: "4px",
+    boxSizing: "border-box",
     display: "grid",
-    gridTemplateColumns: `repeat(${GRID_COLUMNS}, 10px)`,
-    gridTemplateRows: `repeat(${GRID_ROWS}, 10px)`,
+    gridTemplateColumns: `repeat(${GRID_COLUMNS}, 1fr)`,
+    gridTemplateRows: `repeat(${GRID_ROWS}, 1fr)`,
     background: "black",
   };
   const arenaFooterStyle: React.CSSProperties = {
-    width: "300px",
+    width: "100%",
     minHeight: "24px",
-    margin: "0 auto",
+    margin: "0",
     padding: "4px 8px",
     fontSize: "12px",
     color: "var(--vscode-descriptionForeground)",
@@ -171,6 +178,9 @@ const Arena: React.FC<ArenaProps> = ({
       </main>
 
       <footer style={arenaFooterStyle}>
+        {levelUpMessage && (
+          <p style={{ margin: 0, color: "gold" }}>{levelUpMessage}</p>
+        )}
         {joinMessage && <p style={{ margin: 0 }}>{joinMessage}</p>}
       </footer>
     </div>

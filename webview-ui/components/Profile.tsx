@@ -15,7 +15,7 @@ const Profile: React.FC<ProfileProps> = ({ initialProfile, onSubmit }) => {
   const userLevel = initialProfile?.level ?? 1;
   const userExp = initialProfile?.exp ?? 0;
 
-  const avatars = useAvatarOptions();
+  const avatars = useAvatarOptions(userLevel, userExp);
   const [name, setName] = useState(initialProfile?.name ?? "");
   const [message, setMessage] = useState(initialProfile?.message ?? "");
   const [avatarCode, setAvatarCode] = useState(
@@ -138,7 +138,22 @@ const Profile: React.FC<ProfileProps> = ({ initialProfile, onSubmit }) => {
           ›
         </button>
       </div>
-      <button onClick={handleSubmit} style={btn}>
+      <div
+        style={{
+          textAlign: "center",
+          fontSize: "12px",
+          color: "var(--vscode-descriptionForeground)",
+          marginBottom: "8px",
+        }}
+      >
+        {preview.label}{" "}
+        {unlocked ? "(解放済み)" : `(レベル${preview.unlockLevel}で解放)`}
+      </div>
+      <button
+        onClick={handleSubmit}
+        style={btn}
+        disabled={!name.trim() || !unlocked}
+      >
         広場へ移動
       </button>
     </div>
