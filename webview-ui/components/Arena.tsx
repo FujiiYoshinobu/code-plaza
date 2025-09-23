@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import Avatar from './Avatar';
-import type { SessionSummary, StoredProfile } from '../types';
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import type { SessionState, SessionSummary, StoredProfile } from "../types";
+import Avatar from "./Avatar";
 
 interface ArenaProps {
   profile: StoredProfile;
@@ -14,105 +14,147 @@ interface Position {
   y: number;
 }
 
-const GRID_COLUMNS = 10;
-const GRID_ROWS = 6;
+const GRID_COLUMNS = 30;
+const GRID_ROWS = 20;
 
 function randomPosition(): Position {
-  return { x: Math.floor(Math.random() * GRID_COLUMNS), y: Math.floor(Math.random() * GRID_ROWS) };
+  return {
+    x: Math.floor(Math.random() * GRID_COLUMNS),
+    y: Math.floor(Math.random() * GRID_ROWS),
+  };
 }
-
-function moveWithinGrid(position: Position): Position {
-  const directions: Position[] = [
+function moveWithinGrid(position: Position, state: SessionState): Position {
+  if (state === "sleeping") return position;
+  const dirs = [
     { x: 0, y: 0 },
     { x: 1, y: 0 },
     { x: -1, y: 0 },
     { x: 0, y: 1 },
     { x: 0, y: -1 },
+    { x: 1, y: 1 },
+    { x: -1, y: 1 },
+    { x: 1, y: -1 },
+    { x: -1, y: -1 },
   ];
-  const choice = directions[Math.floor(Math.random() * directions.length)];
+  const c = dirs[Math.floor(Math.random() * dirs.length)];
   return {
-    x: Math.max(0, Math.min(GRID_COLUMNS - 1, position.x + choice.x)),
-    y: Math.max(0, Math.min(GRID_ROWS - 1, position.y + choice.y)),
+    x: Math.max(0, Math.min(GRID_COLUMNS - 1, position.x + c.x)),
+    y: Math.max(0, Math.min(GRID_ROWS - 1, position.y + c.y)),
   };
 }
 
-const Arena: React.FC<ArenaProps> = ({ profile, sessions, selfUid, onEditProfile }) => {
+const Arena: React.FC<ArenaProps> = ({
+  profile,
+  sessions,
+  selfUid,
+  onEditProfile,
+}) => {
   const [positions, setPositions] = useState<Record<string, Position>>({});
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [joinMessage, setJoinMessage] = useState<string | null>(null);
+  const prevCountRef = useRef(0);
 
+  // 新規参加メッセージ
   useEffect(() => {
-    setPositions((prev) => {
-      const next: Record<string, Position> = { ...prev };
-      sessions.forEach((session) => {
-        if (!next[session.uid]) {
-          next[session.uid] = randomPosition();
-        }
-      });
-      Object.keys(next).forEach((uid) => {
-        if (!sessions.some((session) => session.uid === uid)) {
-          delete next[uid];
-        }
-      });
-      return next;
-    });
+    if (sessions.length > prevCountRef.current) {
+      const newSession = sessions[sessions.length - 1];
+      setJoinMessage(`${newSession.name}さんが参加しました。`);
+      setTimeout(() => setJoinMessage(null), 5000);
+    }
+    prevCountRef.current = sessions.length;
   }, [sessions]);
 
+  // 各アバターをバラバラに動かす
   useEffect(() => {
-    const tick = () => {
-      setPositions((prev) => {
-        const next: Record<string, Position> = { ...prev };
-        sessions.forEach((session) => {
+    const timers: Record<string, ReturnType<typeof setTimeout>> = {};
+
+    sessions.forEach((session) => {
+      const move = () => {
+        setPositions((prev) => {
+          const next = { ...prev };
           const current = next[session.uid] ?? randomPosition();
-          next[session.uid] = session.state === 'active' ? moveWithinGrid(current) : current;
+          next[session.uid] = moveWithinGrid(current, session.state);
+          return next;
         });
-        return next;
-      });
-      const delay = 1000 + Math.random() * 800;
-      timeoutRef.current = setTimeout(tick, delay);
-    };
-    timeoutRef.current = setTimeout(tick, 1000);
+        const delay = 1500 + Math.random() * 3000;
+        timers[session.uid] = setTimeout(move, delay);
+      };
+      timers[session.uid] = setTimeout(move, 1000 + Math.random() * 2000);
+    });
+
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+      Object.values(timers).forEach(clearTimeout);
     };
   }, [sessions]);
 
-  const stats = useMemo(() => {
-    const active = sessions.filter((session) => session.state === 'active');
-    const sleeping = sessions.filter((session) => session.state === 'sleeping');
-    return {
-      total: sessions.length,
-      active: active.length,
-      sleeping: sleeping.length,
-    };
-  }, [sessions]);
+  const stats = useMemo(() => ({ total: sessions.length }), [sessions]);
+
+  // --- Styles ---
+  const arenaHeaderStyle: React.CSSProperties = {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "8px 12px",
+    background: "var(--vscode-editor-background)",
+    borderBottom: "1px solid var(--vscode-editorGroup-border)",
+    fontSize: "13px",
+    color: "var(--vscode-descriptionForeground)",
+  };
+  const statsTextStyle: React.CSSProperties = { fontSize: "12px" };
+  const gearButtonStyle: React.CSSProperties = {
+    border: "none",
+    background: "transparent",
+    cursor: "pointer",
+    fontSize: "18px",
+  };
+  const arenaGridStyle: React.CSSProperties = {
+    position: "relative",
+    width: "300px",
+    height: "200px",
+    margin: "0 auto",
+    padding: "4px", // ← 外周に余白
+    boxSizing: "border-box", // ← パディング込みで300x200を維持
+    display: "grid",
+    gridTemplateColumns: `repeat(${GRID_COLUMNS}, 10px)`,
+    gridTemplateRows: `repeat(${GRID_ROWS}, 10px)`,
+    background: "black",
+  };
+  const arenaFooterStyle: React.CSSProperties = {
+    width: "300px",
+    minHeight: "24px",
+    margin: "0 auto",
+    padding: "4px 8px",
+    fontSize: "12px",
+    color: "var(--vscode-descriptionForeground)",
+    boxSizing: "border-box",
+  };
 
   return (
-    <div className="arena-view">
-      <header className="arena-header">
-        <div className="arena-profile">
-          <h1>{profile.name}</h1>
-          <p>
-            レベル {profile.level} ・ 経験値 {profile.exp}
-          </p>
-        </div>
-        <div className="arena-stats">
-          <span>参加者 {stats.total}人</span>
-          <span>活動中 {stats.active}人</span>
-          <span>休憩中 {stats.sleeping}人</span>
-        </div>
-        <button className="secondary" onClick={onEditProfile} type="button">
-          プロフィール編集
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+        height: "100%",
+      }}
+    >
+      <header style={arenaHeaderStyle}>
+        <span style={statsTextStyle}>参加中: {stats.total}人</span>
+        <button
+          style={gearButtonStyle}
+          onClick={onEditProfile}
+          title="プロフィール編集"
+        >
+          ⚙️
         </button>
       </header>
-      <main className="arena-grid">
+
+      <main style={arenaGridStyle}>
         {sessions.map((session) => {
-          const position = positions[session.uid] ?? randomPosition();
+          const pos = positions[session.uid] ?? randomPosition();
           const style: React.CSSProperties = {
-            left: `${((position.x + 0.5) / GRID_COLUMNS) * 100}%`,
-            top: `${((position.y + 0.5) / GRID_ROWS) * 100}%`,
-          };
+            "--grid-x": `${pos.x + 1}`,
+            "--grid-y": `${pos.y + 1}`,
+          } as React.CSSProperties;
           return (
             <Avatar
               key={session.uid}
@@ -128,9 +170,9 @@ const Arena: React.FC<ArenaProps> = ({ profile, sessions, selfUid, onEditProfile
           );
         })}
       </main>
-      <footer className="arena-footer">
-        <p>新しい仲間とすれ違うと経験値がアップします！</p>
-        {sessions.length === 0 && <p>まだ誰もいません。チームメイトが参加するとここに表示されます。</p>}
+
+      <footer style={arenaFooterStyle}>
+        {joinMessage && <p style={{ margin: 0 }}>{joinMessage}</p>}
       </footer>
     </div>
   );

@@ -5,40 +5,31 @@
   "version": "0.0.1",
   "publisher": "code-plaza",
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": ">=1.85.0"
   },
-  "categories": [
-    "Other"
-  ],
-  "activationEvents": [],
   "main": "./out/extension.js",
+  "activationEvents": [
+    "onView:codePlazaView"
+  ],
   "contributes": {
-    "commands": [
-      {
-        "command": "code-plaza.openPlaza",
-        "title": "Code Plaza: Open Plaza",
-        "category": "Code Plaza"
-      }
-    ],
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "codePlaza",
-          "title": "Code Plaza",
-          "icon": "media/icon.svg"
-        }
-      ]
-    },
     "views": {
-      "codePlaza": [
+      "explorer": [
         {
           "id": "codePlazaView",
           "name": "Code Plaza",
-          "icon": "media/icon.svg",
-          "type": "webview"
+          "type": "webview",
+          "contextualTitle": "Code Plaza",
+          "icon": "$(symbol-misc)"
         }
       ]
-    }
+    },
+    "commands": [
+      {
+        "command": "code-plaza.openPlaza",
+        "title": "Open Code Plaza",
+        "category": "Code Plaza"
+      }
+    ]
   },
   "scripts": {
     "build": "node esbuild.config.js",

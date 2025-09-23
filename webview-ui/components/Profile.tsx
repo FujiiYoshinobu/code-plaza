@@ -1,6 +1,10 @@
-import React, { FormEvent, useMemo, useState } from 'react';
-import type { StoredProfile } from '../types';
-import { useAvatarOptions, resolveAvatar } from '../hooks/useAvatars';
+import React, { useMemo, useState } from "react";
+import {
+  isAvatarUnlocked,
+  resolveAvatar,
+  useAvatarOptions,
+} from "../hooks/useAvatars";
+import type { StoredProfile } from "../types";
 
 interface ProfileProps {
   initialProfile: StoredProfile | null;
@@ -8,88 +12,135 @@ interface ProfileProps {
 }
 
 const Profile: React.FC<ProfileProps> = ({ initialProfile, onSubmit }) => {
+  const userLevel = initialProfile?.level ?? 1;
+  const userExp = initialProfile?.exp ?? 0;
+
   const avatars = useAvatarOptions();
-  const [name, setName] = useState(initialProfile?.name ?? '');
-  const [message, setMessage] = useState(initialProfile?.message ?? '');
-  const [avatarCode, setAvatarCode] = useState(initialProfile?.avatarCode ?? avatars[0]?.code ?? 'apple');
-  const [error, setError] = useState('');
+  const [name, setName] = useState(initialProfile?.name ?? "");
+  const [message, setMessage] = useState(initialProfile?.message ?? "");
+  const [avatarCode, setAvatarCode] = useState(
+    initialProfile?.avatarCode ?? avatars[0].code
+  );
 
-  const preview = useMemo(() => resolveAvatar(avatarCode, avatars), [avatarCode, avatars]);
+  const currentIndex = avatars.findIndex((a) => a.code === avatarCode);
+  const preview = useMemo(
+    () => resolveAvatar(avatarCode, avatars),
+    [avatarCode, avatars]
+  );
+  const unlocked = isAvatarUnlocked(avatarCode, userLevel, userExp);
 
-  const handleSubmit = (event?: FormEvent) => {
-    event?.preventDefault();
-    if (!name.trim()) {
-      setError('名前を入力してください');
-      return;
-    }
-    setError('');
+  const handlePrev = () => {
+    const newIndex = currentIndex > 0 ? currentIndex - 1 : avatars.length - 1;
+    setAvatarCode(avatars[newIndex].code);
+  };
+  const handleNext = () => {
+    const newIndex = currentIndex < avatars.length - 1 ? currentIndex + 1 : 0;
+    setAvatarCode(avatars[newIndex].code);
+  };
+
+  const handleSubmit = () => {
+    if (!name.trim()) return;
     onSubmit({
       name: name.trim(),
-      avatarCode,
       message: message.trim(),
+      avatarCode,
       exp: initialProfile?.exp ?? 0,
       level: initialProfile?.level ?? 1,
     });
   };
 
+  // --- Styles ---
+  const container: React.CSSProperties = {
+    width: "300px",
+    height: "200px",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    padding: "8px",
+    boxSizing: "border-box",
+    background: "var(--vscode-sideBar-background)",
+    border: "1px solid var(--vscode-editorGroup-border)",
+    borderRadius: "8px",
+  };
+
+  const input: React.CSSProperties = {
+    fontSize: "12px",
+    padding: "4px",
+    borderRadius: "4px",
+    border: "1px solid var(--vscode-editorGroup-border)",
+    background: "var(--vscode-input-background)",
+    color: "var(--vscode-input-foreground)",
+  };
+
+  const avatarBox: React.CSSProperties = {
+    flex: "0 0 100px", // 枠は高さ100px確保
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+    gap: "8px",
+  };
+
+  const avatarImage: React.CSSProperties = {
+    width: "64px", // ← ここで縮小
+    height: "64px",
+    borderRadius: "4px",
+    filter: unlocked ? "none" : "brightness(0.4)",
+    objectFit: "contain",
+  };
+
+  const lockOverlay: React.CSSProperties = {
+    position: "absolute",
+    fontSize: "24px",
+    color: "white",
+    textShadow: "0 0 4px black",
+  };
+
+  const btn: React.CSSProperties = {
+    padding: "6px",
+    borderRadius: "6px",
+    border: "none",
+    background: "#007acc",
+    color: "white",
+    fontSize: "13px",
+    cursor: "pointer",
+  };
+
+  const navBtn: React.CSSProperties = {
+    background: "transparent",
+    border: "none",
+    fontSize: "20px",
+    cursor: "pointer",
+    color: "#007acc",
+  };
+
   return (
-    <div className="profile-view">
-      <div className="profile-card">
-        <h1>はじめまして！</h1>
-        <p className="profile-lead">Code Plaza に参加するためのプロフィールを設定しましょう。</p>
-        <form onSubmit={handleSubmit} className="profile-form">
-          <label className="profile-label" htmlFor="profile-name">
-            名前
-            <input
-              id="profile-name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="例: Fujii"
-              required
-            />
-          </label>
-          <label className="profile-label" htmlFor="profile-message">
-            一言コメント
-            <textarea
-              id="profile-message"
-              value={message}
-              onChange={(event) => setMessage(event.target.value)}
-              placeholder="今日の気分を共有しよう！"
-              rows={3}
-            />
-          </label>
-          <fieldset className="avatar-fieldset">
-            <legend>アバターを選択</legend>
-            <div className="avatar-options">
-              {avatars.map((avatar) => (
-                <label key={avatar.code} className={avatar.code === avatarCode ? 'selected' : ''}>
-                  <input
-                    type="radio"
-                    name="avatar"
-                    value={avatar.code}
-                    checked={avatarCode === avatar.code}
-                    onChange={() => setAvatarCode(avatar.code)}
-                  />
-                  <img src={avatar.src} alt={avatar.label} />
-                  <span>{avatar.label}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-          {error && <p className="profile-error">{error}</p>}
-        </form>
-      </div>
-      <div className="profile-preview">
-        <h2>プレビュー</h2>
-        <div className="profile-preview-avatar">
-          <img src={preview.src} alt={preview.label} />
-        </div>
-        <p className="profile-preview-name">{name || 'あなたの名前'}</p>
-        <p className="profile-preview-message">{message || 'ひとことを入力すると、広場で表示されます。'}</p>
-        <button className="primary" onClick={handleSubmit} type="button">
-          広場へ移動
+    <div style={container}>
+      <input
+        placeholder="名前"
+        value={name}
+        onChange={(e) => setName(e.currentTarget.value)}
+        style={input}
+      />
+      <input
+        placeholder="一言コメント"
+        value={message}
+        onChange={(e) => setMessage(e.currentTarget.value)}
+        style={input}
+      />
+      <div style={avatarBox}>
+        <button onClick={handlePrev} style={navBtn}>
+          ‹
+        </button>
+        <img src={preview.src} alt={preview.label} style={avatarImage} />
+        {!unlocked && <span style={lockOverlay}>🔒</span>}
+        <button onClick={handleNext} style={navBtn}>
+          ›
         </button>
       </div>
+      <button onClick={handleSubmit} style={btn}>
+        広場へ移動
+      </button>
     </div>
   );
 };

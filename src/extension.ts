@@ -20,22 +20,35 @@ const UID_KEY = 'code-plaza.uid';
 
 export function activate(context: vscode.ExtensionContext) {
   console.log('[Code Plaza] Extension is being activated...');
+  console.log('[Code Plaza] VIEW_ID:', VIEW_ID);
+  console.log('[Code Plaza] COMMAND_ID:', COMMAND_ID);
   
   try {
     const provider = new CodePlazaViewProvider(context);
+    console.log('[Code Plaza] Provider created successfully');
 
     const webviewViewRegistration = vscode.window.registerWebviewViewProvider(VIEW_ID, provider, {
       webviewOptions: { 
         retainContextWhenHidden: true 
       },
     });
+    console.log('[Code Plaza] WebviewViewProvider registered successfully');
 
     const commandRegistration = vscode.commands.registerCommand(COMMAND_ID, () => {
       console.log('[Code Plaza] Open Plaza command executed');
       provider.reveal();
     });
+    console.log('[Code Plaza] Command registered successfully');
 
     context.subscriptions.push(webviewViewRegistration, commandRegistration);
+    
+    // ビューが利用可能かどうかを確認するために、少し待ってからコマンドを実行してみる
+    setTimeout(() => {
+      console.log('[Code Plaza] Testing if view is available...');
+      void vscode.commands.executeCommand('workbench.view.explorer').then(() => {
+        console.log('[Code Plaza] Explorer command executed successfully');
+      });
+    }, 1000);
     
     console.log('[Code Plaza] Extension activated successfully!');
   } catch (error) {
@@ -56,8 +69,10 @@ class CodePlazaViewProvider implements vscode.WebviewViewProvider {
   private profile?: StoredProfile;
 
   constructor(private readonly context: vscode.ExtensionContext) {
+    console.log('[Code Plaza] Provider constructor called');
     this.uid = this.loadOrCreateUid();
     this.profile = context.globalState.get<StoredProfile>(PROFILE_KEY) ?? undefined;
+    console.log('[Code Plaza] Provider initialized with UID:', this.uid);
   }
 
   reveal(): void {
@@ -67,7 +82,11 @@ class CodePlazaViewProvider implements vscode.WebviewViewProvider {
       this.view.show?.(true);
     } else {
       console.log('[Code Plaza] View does not exist yet, executing workbench command');
-      void vscode.commands.executeCommand('workbench.view.extension.codePlaza');
+      // エクスプローラーを表示してビューにフォーカス
+      void vscode.commands.executeCommand('workbench.view.explorer').then(() => {
+        console.log('[Code Plaza] Explorer opened, now focusing on view');
+        void vscode.commands.executeCommand('codePlazaView.focus');
+      });
     }
   }
 
@@ -89,6 +108,20 @@ class CodePlazaViewProvider implements vscode.WebviewViewProvider {
       console.log('[Code Plaza] HTML content set successfully');
     } catch (error) {
       console.error('[Code Plaza] Failed to set HTML content:', error);
+      // フォールバック用の簡単なHTML
+      webview.html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Code Plaza</title>
+        </head>
+        <body>
+          <h1>Code Plaza</h1>
+          <p>Loading failed, please check the console for errors.</p>
+        </body>
+        </html>
+      `;
     }
 
     this.messenger = new ExtensionMessenger(webview);
