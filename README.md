@@ -57,20 +57,30 @@ Code Plaza は、VS Code のサイドバーに仲間が集まる「広場」を�
    npm install
    ```
 
-3. `src/firestore.ts` の `firebaseConfig` に Firebase の設定値を入力します。
+3. Firebase プロジェクトを設定します。
+
+   a. [Firebase Console](https://console.firebase.google.com/) で新しいプロジェクトを作成するか、既存のプロジェクトを選択します。
+
+   b. **Authentication** を有効にして、**Sign-in method** タブで **Anonymous** 認証を有効にします。
+
+   c. **Firestore Database** を作成します（テストモードまたは本番モードのいずれかを選択）。
+
+   d. プロジェクト設定から Web アプリの設定を取得し、`src/firestore.ts` の `firebaseConfig` に入力します。
 
    ```ts
    const firebaseConfig = {
-     apiKey: '<YOUR_API_KEY>',
-     authDomain: '<YOUR_PROJECT_ID>.firebaseapp.com',
-     projectId: '<YOUR_PROJECT_ID>',
-     storageBucket: '<YOUR_PROJECT_ID>.appspot.com',
-     messagingSenderId: '<YOUR_SENDER_ID>',
-     appId: '<YOUR_APP_ID>',
+     apiKey: "<YOUR_API_KEY>",
+     authDomain: "<YOUR_PROJECT_ID>.firebaseapp.com",
+     projectId: "<YOUR_PROJECT_ID>",
+     storageBucket: "<YOUR_PROJECT_ID>.appspot.com",
+     messagingSenderId: "<YOUR_SENDER_ID>",
+     appId: "<YOUR_APP_ID>",
    };
    ```
 
-   > ⚠️ Firebase の設定が空の場合、拡張機能はモックデータで動作し、実際の同期は行われません。
+   > ⚠️ Firebase の設定が空の場合、または Anonymous 認証が無効の場合、拡張機能はモックデータで動作し、実際の同期は行われません。
+   >
+   > 開発時に Firebase を無効にしたい場合は、環境変数 `DISABLE_FIREBASE=true` を設定してください。
 
 4. ビルドを実行して `out/` に成果物を出力します。
 
@@ -131,12 +141,12 @@ sessions/{uid} = {
 
 ## コマンド一覧
 
-| コマンド             | 説明                               |
-| -------------------- | ---------------------------------- |
-| `npm run build`      | 拡張機能と WebView の一括ビルド     |
-| `npm run watch`      | 開発用ウォッチ（HTML 自動コピー付） |
-| `npm run package`    | VSIX パッケージ生成                |
-| `npm run lint`       | TypeScript の型チェック             |
+| コマンド          | 説明                                |
+| ----------------- | ----------------------------------- |
+| `npm run build`   | 拡張機能と WebView の一括ビルド     |
+| `npm run watch`   | 開発用ウォッチ（HTML 自動コピー付） |
+| `npm run package` | VSIX パッケージ生成                 |
+| `npm run lint`    | TypeScript の型チェック             |
 
 ## ライセンス
 

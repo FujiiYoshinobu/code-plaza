@@ -1,4 +1,5 @@
 import { initializeApp, type FirebaseApp } from 'firebase/app';
+import { getAuth, signInAnonymously, type Auth } from 'firebase/auth';
 import {
   collection,
   doc,
@@ -11,7 +12,6 @@ import {
   updateDoc,
   type Firestore,
 } from 'firebase/firestore';
-import { getAuth, signInAnonymously, type Auth } from 'firebase/auth';
 
 type SessionState = 'active' | 'sleeping' | 'exit';
 
@@ -37,12 +37,12 @@ export interface GreetingResult {
 }
 
 const firebaseConfig = {
-  apiKey: '<YOUR_API_KEY>',
-  authDomain: '<YOUR_PROJECT_ID>.firebaseapp.com',
-  projectId: '<YOUR_PROJECT_ID>',
-  storageBucket: '<YOUR_PROJECT_ID>.appspot.com',
-  messagingSenderId: '<YOUR_SENDER_ID>',
-  appId: '<YOUR_APP_ID>',
+  apiKey: "AIzaSyBDS_1tIREu8AwH3bjh4OS1sYXvecmGx68",
+  authDomain: "code-plaza-c594d.firebaseapp.com",
+  projectId: "code-plaza-c594d",
+  storageBucket: "code-plaza-c594d.firebasestorage.app",
+  messagingSenderId: "122990858805",
+  appId: "1:122990858805:web:7cc910c4c7e97714e0577c"
 };
 
 const ACTIVE_THRESHOLD_MS = 15 * 60 * 1000;
@@ -196,11 +196,27 @@ class FirebaseBackend implements Backend {
   private auth?: Auth;
 
   async initialize(): Promise<void> {
-    this.app = initializeApp(firebaseConfig);
-    this.db = getFirestore(this.app);
-    this.auth = getAuth(this.app);
-    if (!this.auth.currentUser) {
-      await signInAnonymously(this.auth);
+    try {
+      this.app = initializeApp(firebaseConfig);
+      this.db = getFirestore(this.app);
+      this.auth = getAuth(this.app);
+      
+      // Check if anonymous authentication is enabled
+      if (!this.auth.currentUser) {
+        await signInAnonymously(this.auth);
+      }
+      
+      console.log('[Code Plaza] Firebase backend initialized successfully');
+    } catch (error: any) {
+      // Provide more specific error handling
+      if (error?.code === 'auth/configuration-not-found') {
+        throw new Error('Firebase Anonymous Authentication is not enabled. Please enable it in the Firebase Console under Authentication > Sign-in method > Anonymous.');
+      } else if (error?.code === 'auth/api-key-not-valid') {
+        throw new Error('Invalid Firebase API key. Please check your Firebase configuration.');
+      } else if (error?.code === 'auth/invalid-api-key') {
+        throw new Error('Firebase API key is invalid or missing. Please verify your configuration.');
+      }
+      throw error;
     }
   }
 
@@ -344,22 +360,48 @@ class FirebaseBackend implements Backend {
 let backend: Backend | undefined;
 
 function isFirebaseConfigured(): boolean {
-  return !Object.values(firebaseConfig).some((value) => typeof value === 'string' && value.startsWith('<YOUR_'));
+  // Check if Firebase should be disabled via environment variable
+  if (process.env.DISABLE_FIREBASE === 'true') {
+    console.log('[Code Plaza] Firebase is disabled via DISABLE_FIREBASE environment variable');
+    return false;
+  }
+  
+  // Check if all Firebase config values are properly set
+  const hasValidConfig = !Object.values(firebaseConfig).some((value) => 
+    typeof value === 'string' && value.startsWith('<YOUR_')
+  );
+  
+  if (!hasValidConfig) {
+    console.log('[Code Plaza] Firebase configuration contains placeholder values');
+    return false;
+  }
+  
+  return true;
 }
 
 async function getBackend(): Promise<Backend> {
   if (!backend) {
     if (isFirebaseConfigured()) {
+      console.log('[Code Plaza] Attempting to initialize Firebase backend...');
       const candidate = new FirebaseBackend();
       try {
         await candidate.initialize();
         backend = candidate;
+        console.log('[Code Plaza] Using Firebase backend');
       } catch (error) {
-        console.warn('[Code Plaza] Failed to initialize Firebase backend, falling back to mock implementation.', error);
+        console.warn('[Code Plaza] Failed to initialize Firebase backend, falling back to mock implementation.');
+        console.warn('[Code Plaza] Error details:', error);
+        console.warn('[Code Plaza] Common solutions:');
+        console.warn('[Code Plaza] 1. Enable Anonymous Authentication in Firebase Console');
+        console.warn('[Code Plaza] 2. Verify Firebase project configuration');
+        console.warn('[Code Plaza] 3. Set DISABLE_FIREBASE=true to force mock mode');
+        
         backend = new MockBackend();
         await backend.initialize();
+        console.log('[Code Plaza] Using mock backend');
       }
     } else {
+      console.log('[Code Plaza] Firebase not configured, using mock backend');
       backend = new MockBackend();
       await backend.initialize();
     }
@@ -456,3 +498,4 @@ function normalizeProfile(user: FirestoreUser): StoredProfile {
 }
 
 export { GREETING_EXP, SessionState };
+

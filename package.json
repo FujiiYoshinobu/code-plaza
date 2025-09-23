@@ -10,9 +10,7 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [
-    "onCommand:code-plaza.openPlaza"
-  ],
+  "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -35,7 +33,9 @@
       "codePlaza": [
         {
           "id": "codePlazaView",
-          "name": "Code Plaza"
+          "name": "Code Plaza",
+          "icon": "media/icon.svg",
+          "type": "webview"
         }
       ]
     }

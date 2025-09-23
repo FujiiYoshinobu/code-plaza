@@ -1,7 +1,7 @@
-import * as vscode from 'vscode';
-import { nanoid } from 'nanoid';
 import { promises as fs } from 'fs';
+import { nanoid } from 'nanoid';
 import * as path from 'path';
+import * as vscode from 'vscode';
 import {
   createInitialProfile,
   loadProfile,
@@ -19,14 +19,28 @@ const PROFILE_KEY = 'code-plaza.profile';
 const UID_KEY = 'code-plaza.uid';
 
 export function activate(context: vscode.ExtensionContext) {
-  const provider = new CodePlazaViewProvider(context);
+  console.log('[Code Plaza] Extension is being activated...');
+  
+  try {
+    const provider = new CodePlazaViewProvider(context);
 
-  context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(VIEW_ID, provider, {
-      webviewOptions: { retainContextWhenHidden: true },
-    }),
-    vscode.commands.registerCommand(COMMAND_ID, () => provider.reveal()),
-  );
+    const webviewViewRegistration = vscode.window.registerWebviewViewProvider(VIEW_ID, provider, {
+      webviewOptions: { 
+        retainContextWhenHidden: true 
+      },
+    });
+
+    const commandRegistration = vscode.commands.registerCommand(COMMAND_ID, () => {
+      console.log('[Code Plaza] Open Plaza command executed');
+      provider.reveal();
+    });
+
+    context.subscriptions.push(webviewViewRegistration, commandRegistration);
+    
+    console.log('[Code Plaza] Extension activated successfully!');
+  } catch (error) {
+    console.error('[Code Plaza] Failed to activate extension:', error);
+  }
 }
 
 export function deactivate() {
@@ -47,14 +61,19 @@ class CodePlazaViewProvider implements vscode.WebviewViewProvider {
   }
 
   reveal(): void {
+    console.log('[Code Plaza] Revealing view...');
     if (this.view) {
+      console.log('[Code Plaza] View exists, showing it');
       this.view.show?.(true);
     } else {
+      console.log('[Code Plaza] View does not exist yet, executing workbench command');
       void vscode.commands.executeCommand('workbench.view.extension.codePlaza');
     }
   }
 
   async resolveWebviewView(webviewView: vscode.WebviewView): Promise<void> {
+    console.log('[Code Plaza] Resolving webview view...');
+    
     this.view = webviewView;
     const webview = webviewView.webview;
     webview.options = {
@@ -65,14 +84,21 @@ class CodePlazaViewProvider implements vscode.WebviewViewProvider {
       ],
     };
 
-    webview.html = await this.getHtml(webview);
+    try {
+      webview.html = await this.getHtml(webview);
+      console.log('[Code Plaza] HTML content set successfully');
+    } catch (error) {
+      console.error('[Code Plaza] Failed to set HTML content:', error);
+    }
+
     this.messenger = new ExtensionMessenger(webview);
+    console.log('[Code Plaza] Webview view resolved successfully');
 
     const listener = webview.onDidReceiveMessage((message: WebviewToExtensionMessage) => {
       void this.handleMessage(message);
     });
 
-    webview.onDidDispose(() => {
+    webviewView.onDidDispose(() => {
       listener.dispose();
       this.stopSession();
     });
