@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import type { SessionState, SessionSummary, StoredProfile } from "../types";
 import Avatar from "./Avatar";
 
@@ -7,6 +7,7 @@ interface ArenaProps {
   selfUid: string;
   sessions: SessionSummary[];
   onEditProfile: () => void;
+  newJoinedUser?: { uid: string; name: string } | null;
 }
 
 interface Position {
@@ -48,20 +49,18 @@ const Arena: React.FC<ArenaProps> = ({
   sessions,
   selfUid,
   onEditProfile,
+  newJoinedUser,
 }) => {
   const [positions, setPositions] = useState<Record<string, Position>>({});
   const [joinMessage, setJoinMessage] = useState<string | null>(null);
-  const prevCountRef = useRef(0);
 
-  // 新規参加メッセージ
+  // 新規参加メッセージ（1日1回制限）
   useEffect(() => {
-    if (sessions.length > prevCountRef.current) {
-      const newSession = sessions[sessions.length - 1];
-      setJoinMessage(`${newSession.name}さんが参加しました。`);
+    if (newJoinedUser) {
+      setJoinMessage(`${newJoinedUser.name}さんが参加しました。`);
       setTimeout(() => setJoinMessage(null), 5000);
     }
-    prevCountRef.current = sessions.length;
-  }, [sessions]);
+  }, [newJoinedUser]);
 
   // 各アバターをバラバラに動かす
   useEffect(() => {

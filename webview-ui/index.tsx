@@ -34,6 +34,10 @@ const App: React.FC = () => {
   const [sessions, setSessions] = useState<SessionPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [greetedToday, setGreetedToday] = useState<string[]>([]);
+  const [newJoinedUser, setNewJoinedUser] = useState<{
+    uid: string;
+    name: string;
+  } | null>(null);
 
   useEffect(() => {
     vscode.postMessage({ type: "ready" });
@@ -71,6 +75,11 @@ const App: React.FC = () => {
               ? { ...prev, exp: data.payload.exp, level: data.payload.level }
               : prev
           );
+          break;
+        case "userJoined":
+          setNewJoinedUser(data.payload);
+          // 5秒後にクリア
+          setTimeout(() => setNewJoinedUser(null), 5000);
           break;
         case "error":
           setError(data.payload);
@@ -171,6 +180,7 @@ const App: React.FC = () => {
           selfUid={sessions.selfUid}
           sessions={arenaSessions}
           onEditProfile={handleEditProfile}
+          newJoinedUser={newJoinedUser}
         />
       )}
     </div>

@@ -23,6 +23,10 @@ export function activate(context: vscode.ExtensionContext) {
   console.log('[Code Plaza] VIEW_ID:', VIEW_ID);
   console.log('[Code Plaza] COMMAND_ID:', COMMAND_ID);
   
+  // 起動時に古いすれ違いリストをクリーンアップ
+  cleanupOldKeys(context);
+  console.log('[Code Plaza] Old greeted keys cleaned up');
+  
   try {
     const provider = new CodePlazaViewProvider(context);
     console.log('[Code Plaza] Provider created successfully');
@@ -235,6 +239,20 @@ class CodePlazaViewProvider implements vscode.WebviewViewProvider {
           if (!this.messenger) {
             return;
           }
+          
+          // 新規参加者をチェック
+          sessions.forEach((session) => {
+            if (session.uid !== this.uid && !hasSeenToday(this.context, session.uid)) {
+              // 今日初めて見るユーザー
+              addSeenToday(this.context, session.uid);
+              console.log('[Code Plaza] New user joined today:', session.profile.name);
+              this.messenger?.post({ 
+                type: 'userJoined', 
+                payload: { uid: session.uid, name: session.profile.name } 
+              });
+            }
+          });
+          
           this.messenger.post({ type: 'sessions', payload: mapSessions(this.uid, sessions) });
         });
       }
@@ -265,9 +283,24 @@ class CodePlazaViewProvider implements vscode.WebviewViewProvider {
     if (!this.messenger) {
       return;
     }
+    
+    // ローカルすれ違いリストでチェック
+    if (hasGreetedToday(this.context, greetedUid)) {
+      console.log('[Code Plaza] Already greeted today (local check):', greetedUid);
+      this.messenger.post({ 
+        type: 'error', 
+        payload: '今日すでに挨拶済みです（ローカル記録より）' 
+      });
+      return;
+    }
+    
     try {
       const result = await recordGreeting(this.uid, greetedUid);
       if (result) {
+        // 挨拶成功時にローカルリストに追加
+        addGreetedToday(this.context, greetedUid);
+        console.log('[Code Plaza] Added to local greeted list:', greetedUid);
+        
         this.profile = {
           ...(this.profile ?? createInitialProfile({})),
           exp: result.exp,
@@ -284,6 +317,51 @@ class CodePlazaViewProvider implements vscode.WebviewViewProvider {
   private postError(message: string, error: unknown): void {
     console.error('[Code Plaza]', message, error);
     this.messenger?.post({ type: 'error', payload: message });
+  }
+}
+
+// ローカルすれ違いリスト機能
+function cleanupOldKeys(context: vscode.ExtensionContext): void {
+  const today = new Date().toISOString().slice(0, 10);
+  for (const key of context.globalState.keys()) {
+    if ((key.startsWith("greeted-") || key.startsWith("seen-")) && key !== `greeted-${today}` && key !== `seen-${today}`) {
+      void context.globalState.update(key, undefined); // 古いキー削除
+    }
+  }
+}
+
+function hasGreetedToday(context: vscode.ExtensionContext, uid: string): boolean {
+  const today = new Date().toISOString().slice(0, 10);
+  const key = `greeted-${today}`;
+  const greeted = context.globalState.get<string[]>(key) || [];
+  return greeted.includes(uid);
+}
+
+function addGreetedToday(context: vscode.ExtensionContext, uid: string): void {
+  const today = new Date().toISOString().slice(0, 10);
+  const key = `greeted-${today}`;
+  const greeted = context.globalState.get<string[]>(key) || [];
+  if (!greeted.includes(uid)) {
+    greeted.push(uid);
+    void context.globalState.update(key, greeted);
+  }
+}
+
+// 初回参加チェック機能
+function hasSeenToday(context: vscode.ExtensionContext, uid: string): boolean {
+  const today = new Date().toISOString().slice(0, 10);
+  const key = `seen-${today}`;
+  const seen = context.globalState.get<string[]>(key) || [];
+  return seen.includes(uid);
+}
+
+function addSeenToday(context: vscode.ExtensionContext, uid: string): void {
+  const today = new Date().toISOString().slice(0, 10);
+  const key = `seen-${today}`;
+  const seen = context.globalState.get<string[]>(key) || [];
+  if (!seen.includes(uid)) {
+    seen.push(uid);
+    void context.globalState.update(key, seen);
   }
 }
 

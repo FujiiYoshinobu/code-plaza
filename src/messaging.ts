@@ -1,5 +1,5 @@
 import type * as vscode from 'vscode';
-import type { SessionState, SessionSnapshot, StoredProfile } from './firestore';
+import type { SessionSnapshot, SessionState, StoredProfile } from './firestore';
 
 export interface ExtensionState {
   profile?: StoredProfile;
@@ -11,6 +11,7 @@ export type ExtensionToWebviewMessage =
   | { type: 'profileSaved'; payload: StoredProfile }
   | { type: 'sessions'; payload: SessionPayload }
   | { type: 'greetingRecorded'; payload: GreetingPayload }
+  | { type: 'userJoined'; payload: { uid: string; name: string } }
   | { type: 'error'; payload: string };
 
 export type WebviewToExtensionMessage =
